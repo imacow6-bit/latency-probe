@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>ALFRED</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Fixed 1080x1920 design canvas, scaled to fit the real screen -->
+  <div id="scaler">
+    <div id="stage">
+
+      <!-- soft ambient glow behind everything -->
+      <div class="ambient"></div>
+
+      <!-- corner HUD brackets -->
+      <div class="bracket tl"></div>
+      <div class="bracket tr"></div>
+      <div class="bracket bl"></div>
+      <div class="bracket br"></div>
+
+      <!-- ================= HEADER ================= -->
+      <header class="head">
+        <div class="title">A L F R E D</div>
+        <div class="subtitle">AUTONOMOUS LIFESTYLE FRAMEWORK FOR<br />RESPONSIVE ENVIRONMENTS AND DEVICES</div>
+      </header>
+
+      <!-- ================= TOP TELEMETRY STRIP ================= -->
+      <section class="strip strip-top">
+        <!-- System status / heartbeat -->
+        <div class="panel">
+          <div class="panel-label">SYSTEM STATUS <span class="ok" id="sysState">ONLINE</span></div>
+          <svg class="ekg" viewBox="0 0 260 60" preserveAspectRatio="none">
+            <polyline id="ekgLine" points="" />
+          </svg>
+          <div class="panel-foot"><span>CPU <b id="cpu">04</b>%</span><span>LOAD <b id="load">0.32</b></span></div>
+        </div>
+
+        <!-- Memory ring -->
+        <div class="panel panel-mem">
+          <div class="panel-label">MEMORY</div>
+          <div class="mem-ring">
+            <svg viewBox="0 0 120 120">
+              <circle class="mem-track" cx="60" cy="60" r="50" />
+              <circle class="mem-arc" id="memArc" cx="60" cy="60" r="50" />
+            </svg>
+            <div class="mem-val"><b id="memPct">62</b><i>%</i></div>
+          </div>
+          <div class="panel-foot"><span>USED <b id="memUsed">9.9</b>G</span><span>FREE <b id="memFree">6.1</b>G</span></div>
+        </div>
+      </section>
+
+      <!-- ================= CORE ================= -->
+      <section class="core-wrap">
+        <div class="core" id="core">
+          <svg class="core-svg" viewBox="0 0 400 400">
+            <defs>
+              <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#bff2ff" stop-opacity="1" />
+                <stop offset="30%" stop-color="#39c6ff" stop-opacity="0.9" />
+                <stop offset="70%" stop-color="#0a6cff" stop-opacity="0.25" />
+                <stop offset="100%" stop-color="#0a6cff" stop-opacity="0" />
+              </radialGradient>
+            </defs>
+
+            <!-- crosshair -->
+            <line class="cross" x1="200" y1="12" x2="200" y2="388" />
+            <line class="cross" x1="12" y1="200" x2="388" y2="200" />
+
+            <!-- outer slow ring with ticks -->
+            <g class="spin spin-cw-slow">
+              <circle class="ring thin" cx="200" cy="200" r="185" />
+              <circle class="ring dashed" cx="200" cy="200" r="168" />
+            </g>
+
+            <!-- mid ring counter-rotating -->
+            <g class="spin spin-ccw">
+              <circle class="ring" cx="200" cy="200" r="140" />
+              <circle class="ring dashed2" cx="200" cy="200" r="120" />
+              <circle class="node" cx="200" cy="60" r="4" />
+              <circle class="node" cx="340" cy="200" r="4" />
+              <circle class="node" cx="200" cy="340" r="4" />
+              <circle class="node" cx="60" cy="200" r="4" />
+            </g>
+
+            <!-- inner fast ring -->
+            <g class="spin spin-cw">
+              <circle class="ring thin" cx="200" cy="200" r="95" />
+              <circle class="ring dashed3" cx="200" cy="200" r="78" />
+            </g>
+
+            <!-- glowing center -->
+            <circle class="core-halo" cx="200" cy="200" r="120" fill="url(#coreGlow)" />
+            <circle class="core-dot" cx="200" cy="200" r="10" />
+          </svg>
+          <div class="core-name">ALFRED</div>
+        </div>
+
+        <!-- Voice waveform under the core -->
+        <div class="voice">
+          <div class="panel-label center">VOICE INPUT <span id="voiceState" class="muted">IDLE</span></div>
+          <div class="wave" id="wave"></div>
+        </div>
+      </section>
+
+      <!-- ================= STATUS LINE ================= -->
+      <section class="status">
+        <div class="status-main" id="statusMain">SYSTEM ONLINE</div>
+        <div class="status-sub"><span class="dot" id="statusDot"></span><span id="statusSub">ALL SYSTEMS NOMINAL</span></div>
+      </section>
+
+      <!-- ================= BOTTOM TELEMETRY STRIP ================= -->
+      <section class="strip strip-bottom">
+        <!-- Weather -->
+        <div class="panel panel-weather">
+          <div class="panel-label">WEATHER <span class="muted" id="wxLoc">NEW YORK</span></div>
+          <div class="wx-body">
+            <div class="wx-icon" id="wxIcon">☁</div>
+            <div class="wx-temp"><b id="wxTemp">72</b><i>°</i></div>
+          </div>
+          <div class="panel-foot"><span id="wxCond">PARTLY CLOUDY</span><span>FEELS <b id="wxFeels">70</b>°</span></div>
+        </div>
+
+        <!-- Clock / date -->
+        <div class="panel panel-clock">
+          <div class="panel-label">LOCAL TIME</div>
+          <div class="clock" id="clock">--:--:--</div>
+          <div class="panel-foot"><span id="dateStr">---</span><span id="tzStr">---</span></div>
+        </div>
+
+        <!-- Network -->
+        <div class="panel panel-net">
+          <div class="panel-label">NETWORK <span class="ok">ONLINE</span></div>
+          <div class="net-bars" id="netBars"></div>
+          <div class="panel-foot"><span>UP <b id="netUp">128</b>Mb</span><span>PING <b id="netPing">12</b>ms</span></div>
+        </div>
+      </section>
+
+      <!-- ================= CORE MODULES FOOTER ================= -->
+      <footer class="modules">
+        <div class="modules-title">CORE MODULES</div>
+        <div class="modules-row">
+          <div class="module"><span class="m-dot on"></span><div><b>ENVIRONMENT</b><i>ACTIVE</i></div></div>
+          <div class="module"><span class="m-dot on"></span><div><b>DEVICES</b><i>CONNECTED</i></div></div>
+          <div class="module"><span class="m-dot standby"></span><div><b>SECURITY</b><i>STANDBY</i></div></div>
+          <div class="module"><span class="m-dot on"></span><div><b>NETWORK</b><i>ONLINE</i></div></div>
+        </div>
+      </footer>
+
+      <!-- ================= OPERATOR OVERLAY ================= -->
+      <div class="operator" id="operator">
+        <span class="op-counter"><b id="phraseIdx">0</b> / <span id="phraseTotal">0</span></span>
+        <span class="op-hint">[SPACE] next &nbsp; [⌫] back &nbsp; [R] reset &nbsp; [F] fullscreen &nbsp; [H] hide</span>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
