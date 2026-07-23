@@ -3,43 +3,75 @@
 **Autonomous Lifestyle Framework for Responsive Environments and Devices**
 
 A single static web page that acts as a fictional JARVIS-style AI-assistant
-display for filming — a glowing concentric-ring "core", live-looking telemetry
-(weather, clock, memory, CPU, network, heartbeat), and a spacebar-driven
-playback rig so an operator can make ALFRED "speak" pre-recorded lines on cue.
+display for filming. It's built **portrait-native** for a vertical wall
+monitor: an architectural HUD with a large animated "neural iris" core,
+live-looking telemetry (weather, clock, memory, CPU, network, heartbeat), and a
+spacebar-driven playback rig so an operator can make ALFRED "speak" pre-recorded
+lines on cue.
 
 No frameworks, no build step, **zero external requests** — it runs deployed on
 a host *or* straight from a local copy, fully offline.
+
+## States
+
+ALFRED isn't a static dashboard — it has modes, and the screen visibly changes
+between them:
+
+| State | Look |
+| --- | --- |
+| **IDLE / STANDBY** | Slow breathing core, dim waveform shimmer, calm telemetry |
+| **LISTENING** | Outer targeting ring brightens, a pulse expands outward |
+| **PROCESSING** | Rings spin up, a radar sweep rotates over the core |
+| **SPEAKING** | Core brightens, waveform goes reactive, the transcript line appears, CPU climbs |
+
+Each **Space** press runs the full cinematic sequence — *listening → processing
+→ speaking* — then settles back to idle. That lead-in is what makes ALFRED feel
+alive on camera; if you want an instant response instead, the audio plays as
+soon as the SPEAKING state begins.
 
 ## Controls
 
 | Key | Action |
 | --- | --- |
-| **Space** | Play the next voice line in the sequence (wraps at the end) |
-| **Backspace** | Replay the previous line |
-| **R** | Reset the sequence to the start |
+| **Space** | Speak the next line (runs the listening → processing → speaking sequence) |
+| **Backspace** | Speak the previous line |
+| **R** | Reset to the start (idle) |
+| **1 / 2 / 3 / 4** | Force a state — Idle / Listening / Processing / Speaking (rehearsal) |
 | **F** | Toggle fullscreen |
 | **H** | Hide/show the operator overlay (counter + hints) |
 | **Esc** | Exit fullscreen |
 
-The cursor auto-hides after a couple of seconds of no movement. A tiny
-`current / total` phrase counter sits at the bottom for the operator; press
-**H** to hide it before rolling camera.
+The cursor auto-hides after a couple of seconds. A tiny `current / total` phrase
+counter sits at the bottom for the operator — press **H** to hide it before
+rolling camera.
 
-## Audio
+## Audio & transcripts
 
 Put numbered voice lines in [`audio/`](audio/) — `01.mp3`, `02.mp3`, … — and
-they play in order on each spacebar press. See [`audio/README.md`](audio/README.md)
-for naming rules and tips on generating the voice. No audio yet? Run
-`python3 audio/make-placeholders.py` for a few test tones (the page also runs
-fine with no audio at all).
+they play in order. See [`audio/README.md`](audio/README.md) for naming rules and
+tips on generating the voice. No audio yet? Run
+`python3 audio/make-placeholders.py` for a few test tones — the state sequence
+works even with no audio at all.
+
+On-screen captions live in [`transcripts.js`](transcripts.js): line _N_ there
+pairs with `audio/0N.mp3` and appears in the dialogue zone while ALFRED speaks.
+Edit that array to match your lines, or leave it empty for no captions.
 
 ## Display / filming setup
 
-Designed for a **portrait** screen — the layout is a fixed `1080 × 1920`
-canvas that auto-scales to fit whatever window or monitor it's on, so it looks
-right on a rotated display. Pair it with the "smoked acrylic in front of a
-black-background monitor" trick for the floating-hologram look; dim the room and
-add an edge LED strip for extra glow.
+Built for a **portrait** monitor. The layout is a native `9:16` composition
+sized in container units, so it renders at the screen's real resolution (crisp
+at 1080×1920 *or* a higher-res panel) and fills a rotated monitor edge-to-edge —
+no letterboxing on the actual display. (In a normal landscape desktop browser
+you'll see black bars on the sides; that's just the preview.)
+
+For the cleanest look on set:
+
+- Set the monitor to **portrait** in your OS display settings.
+- Open the page and press **F** for **fullscreen** (hides browser chrome,
+  address bar, taskbar) and **H** to hide the operator overlay.
+- Pair it with the "smoked acrylic in front of a black-background monitor" trick
+  for the floating-hologram look; dim the room and add an edge LED strip for glow.
 
 ## Running it
 
@@ -65,9 +97,10 @@ though a local server is the most predictable if a browser gets fussy about
 ## Files
 
 ```
-index.html   markup / HUD structure
-styles.css   all styling + animations
-app.js       scaling, audio rig, telemetry, keyboard
-audio/       numbered voice lines (+ placeholder generator)
-vercel.json  static-host config
+index.html      HUD structure (header, diagnostics, core, dialogue, footer)
+styles.css      styling, framing, animations, per-state overrides
+app.js          state machine, audio rig, telemetry, keyboard
+transcripts.js  on-screen caption lines (editable)
+audio/          numbered voice lines (+ placeholder generator)
+vercel.json     static-host config
 ```
