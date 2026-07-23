@@ -28,22 +28,152 @@
   function applyLayout() {
     var W = window.innerWidth, H = window.innerHeight;
     var rot = rotMode === "auto" ? (W > H ? 90 : 0) : parseInt(rotMode, 10);
-    var sw = (rot === 90 || rot === 270)
-      ? Math.min(H, W * 9 / 16)
-      : Math.min(W, H * 9 / 16);
-    var sh = sw * 16 / 9;
+    // fill the viewport completely — no letterboxing; the flexible core
+    // zone absorbs any deviation from a strict 9:16 ratio
+    var sw = (rot === 90 || rot === 270) ? H : W;
+    var sh = (rot === 90 || rot === 270) ? W : H;
     stage.style.width = sw + "px";
     stage.style.height = sh + "px";
     stage.style.transform = "translate(-50%, -50%)" + (rot ? " rotate(" + rot + "deg)" : "");
+    requestAnimationFrame(bgBuild);   // rebuild depth layer at the new size
   }
   window.addEventListener("resize", applyLayout);
   window.addEventListener("orientationchange", applyLayout);
-  applyLayout();
 
   function cycleRotation() {
     rotMode = ROT_MODES[(ROT_MODES.indexOf(rotMode) + 1) % ROT_MODES.length];
     applyLayout();
     toast("ROTATION: " + rotMode.toUpperCase());
+  }
+
+  /* =========================================================
+     DEPTH LAYER (canvas behind the UI)
+     Starfield, distant rings around the core, graticule,
+     nebula glow, micro-markers, vignette. Static parts are
+     pre-rendered; ~70 stars twinkle on top each frame.
+     ========================================================= */
+  var bgCanvas = document.getElementById("bgfx");
+  var bgCtx = bgCanvas.getContext("2d");
+  var bgStatic = null;          // offscreen prerender
+  var bgW = 0, bgH = 0, bgDpr = 1;
+  var twinkles = [];
+
+  function bgBuild() {
+    var seed0 = 4242;
+    function r() { seed0 = (seed0 * 16807) % 2147483647; return (seed0 - 1) / 2147483646; }
+
+    bgW = stage.clientWidth; bgH = stage.clientHeight;
+    if (!bgW || !bgH) return;
+    bgDpr = Math.min(window.devicePixelRatio || 1, 2);
+    bgCanvas.width = Math.round(bgW * bgDpr);
+    bgCanvas.height = Math.round(bgH * bgDpr);
+
+    // ring center = actual core center within the stage
+    var coreBox = document.getElementById("core");
+    var cx = coreBox.offsetLeft + coreBox.offsetWidth / 2;
+    var cy = coreBox.offsetTop + coreBox.offsetHeight / 2;
+
+    bgStatic = document.createElement("canvas");
+    bgStatic.width = bgCanvas.width; bgStatic.height = bgCanvas.height;
+    var c = bgStatic.getContext("2d");
+    c.scale(bgDpr, bgDpr);
+
+    // nebula glows
+    function glow(x, y, rad, rgba) {
+      var g = c.createRadialGradient(x, y, 0, x, y, rad);
+      g.addColorStop(0, rgba); g.addColorStop(1, "rgba(0,0,0,0)");
+      c.fillStyle = g; c.fillRect(0, 0, bgW, bgH);
+    }
+    glow(cx, cy, bgW * 0.95, "rgba(28,105,215,0.10)");
+    glow(bgW * 0.85, bgH * 0.12, bgW * 0.5, "rgba(20,80,180,0.05)");
+    glow(bgW * 0.12, bgH * 0.92, bgW * 0.55, "rgba(18,70,160,0.05)");
+
+    // graticule
+    c.strokeStyle = "rgba(90,170,230,0.035)"; c.lineWidth = 1;
+    for (var gx = 1; gx < 8; gx++) {
+      c.beginPath(); c.moveTo(bgW * gx / 8, 0); c.lineTo(bgW * gx / 8, bgH); c.stroke();
+    }
+    for (var gy = 1; gy < 14; gy++) {
+      c.beginPath(); c.moveTo(0, bgH * gy / 14); c.lineTo(bgW, bgH * gy / 14); c.stroke();
+    }
+    // brighter center axes running the full stage
+    c.strokeStyle = "rgba(90,170,230,0.07)";
+    c.beginPath(); c.moveTo(cx, 0); c.lineTo(cx, bgH); c.stroke();
+    c.beginPath(); c.moveTo(0, cy); c.lineTo(bgW, cy); c.stroke();
+
+    // distant rings continuing out past the panels
+    [0.44, 0.56, 0.70, 0.86, 1.04, 1.24].forEach(function (f, i) {
+      c.beginPath(); c.arc(cx, cy, bgW * f, 0, Math.PI * 2);
+      c.strokeStyle = "rgba(80,160,230," + (i % 2 ? 0.045 : 0.065) + ")";
+      c.setLineDash(i === 2 ? [2, 16] : []);
+      c.lineWidth = 1; c.stroke(); c.setLineDash([]);
+    });
+    // a few brighter partial arcs on those distant rings
+    for (var a0 = 0; a0 < 6; a0++) {
+      var rr = bgW * (0.5 + r() * 0.7), st = r() * Math.PI * 2;
+      c.beginPath(); c.arc(cx, cy, rr, st, st + 0.25 + r() * 0.5);
+      c.strokeStyle = "rgba(110,190,245," + (0.05 + r() * 0.06).toFixed(3) + ")";
+      c.lineWidth = 1.4; c.stroke();
+    }
+
+    // micro-markers: crosses, squares, ticks
+    for (var mM = 0; mM < 46; mM++) {
+      var mx = r() * bgW, my = r() * bgH, s = 2 + r() * 3.4;
+      c.strokeStyle = "rgba(120,190,240," + (0.05 + r() * 0.09).toFixed(3) + ")";
+      c.lineWidth = 1;
+      var kind = r();
+      if (kind < 0.45) {          // cross
+        c.beginPath(); c.moveTo(mx - s, my); c.lineTo(mx + s, my);
+        c.moveTo(mx, my - s); c.lineTo(mx, my + s); c.stroke();
+      } else if (kind < 0.75) {   // square
+        c.strokeRect(mx - s / 2, my - s / 2, s, s);
+      } else {                    // tick
+        c.beginPath(); c.moveTo(mx, my); c.lineTo(mx + s * 2, my); c.stroke();
+      }
+    }
+
+    // static star base
+    for (var sB = 0; sB < 240; sB++) {
+      var x = r() * bgW, y = r() * bgH, rad = 0.4 + r() * 1.1;
+      c.fillStyle = "rgba(170,220,255," + (0.06 + r() * 0.22).toFixed(3) + ")";
+      c.beginPath(); c.arc(x, y, rad, 0, Math.PI * 2); c.fill();
+    }
+
+    // vignette
+    var v = c.createRadialGradient(bgW / 2, bgH / 2, bgH * 0.28, bgW / 2, bgH / 2, bgH * 0.72);
+    v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0,0.42)");
+    c.fillStyle = v; c.fillRect(0, 0, bgW, bgH);
+
+    // twinkling stars (animated each frame)
+    twinkles = [];
+    for (var tw = 0; tw < 70; tw++) {
+      twinkles.push({
+        x: r() * bgW, y: r() * bgH,
+        r: 0.6 + r() * 1.7,
+        p: r() * Math.PI * 2,           // phase
+        f: 0.4 + r() * 1.4,             // frequency
+        big: r() < 0.14                 // a few get a glow halo
+      });
+    }
+  }
+
+  function bgDraw(now) {
+    if (!bgStatic) return;
+    bgCtx.setTransform(1, 0, 0, 1, 0, 0);
+    bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+    bgCtx.drawImage(bgStatic, 0, 0);
+    bgCtx.setTransform(bgDpr, 0, 0, bgDpr, 0, 0);
+    var t = now / 1000;
+    for (var i = 0; i < twinkles.length; i++) {
+      var s = twinkles[i];
+      var a = 0.10 + 0.5 * Math.abs(Math.sin(s.p + t * s.f));
+      if (s.big) {
+        bgCtx.fillStyle = "rgba(140,215,255," + (a * 0.16).toFixed(3) + ")";
+        bgCtx.beginPath(); bgCtx.arc(s.x, s.y, s.r * 4.5, 0, Math.PI * 2); bgCtx.fill();
+      }
+      bgCtx.fillStyle = "rgba(200,235,255," + a.toFixed(3) + ")";
+      bgCtx.beginPath(); bgCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2); bgCtx.fill();
+    }
   }
 
   /* =========================================================
@@ -489,6 +619,7 @@
   for (var w0 = 0; w0 < WAVE_BARS; w0++) wave.appendChild(document.createElement("span"));
   (function animateWave() {
     var now = performance.now();
+    bgDraw(now);
     var bars = wave.children, t = now / 190;
     var mid = (WAVE_BARS - 1) / 2;
     var speaking = waveMode === STATE.SPEAKING;
@@ -533,6 +664,7 @@
   }
 
   /* GO */
+  applyLayout();
   setState(STATE.IDLE);
   discover();
 })();
