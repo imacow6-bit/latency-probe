@@ -37,6 +37,7 @@ soon as the SPEAKING state begins.
 | **Backspace** | Speak the previous line |
 | **R** | Reset to the start (idle) |
 | **1 / 2 / 3 / 4** | Force a state — Idle / Listening / Processing / Speaking (rehearsal) |
+| **O** | Cycle screen rotation — Auto / 0° / 90° / 270° |
 | **F** | Toggle fullscreen |
 | **H** | Hide/show the operator overlay (counter + hints) |
 | **Esc** | Exit fullscreen |
@@ -61,15 +62,19 @@ Edit that array to match your lines, or leave it empty for no captions.
 
 Built for a **portrait** monitor. The layout is a native `9:16` composition
 sized in container units, so it renders at the screen's real resolution (crisp
-at 1080×1920 *or* a higher-res panel) and fills a rotated monitor edge-to-edge —
-no letterboxing on the actual display. (In a normal landscape desktop browser
-you'll see black bars on the sides; that's just the preview.)
+at 1080×1920 *or* a higher-res panel) and fills the display edge-to-edge.
+
+**Rotation is handled for you.** If the OS is still outputting landscape to a
+physically rotated monitor, the page detects the landscape signal and renders
+itself rotated 90° so it appears upright on the sideways screen — no OS display
+settings needed. Press **O** to cycle rotation modes (Auto / 0° / 90° / 270°) if
+your monitor is turned the opposite way. Rotating the display in the OS instead
+also works — the page then just renders normally.
 
 For the cleanest look on set:
 
-- Set the monitor to **portrait** in your OS display settings.
-- Open the page and press **F** for **fullscreen** (hides browser chrome,
-  address bar, taskbar) and **H** to hide the operator overlay.
+- Press **F** for **fullscreen** (hides browser chrome, address bar, taskbar)
+  and **H** to hide the operator overlay.
 - Pair it with the "smoked acrylic in front of a black-background monitor" trick
   for the floating-hologram look; dim the room and add an edge LED strip for glow.
 

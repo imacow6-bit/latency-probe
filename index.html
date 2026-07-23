@@ -8,150 +8,155 @@
 </head>
 <body data-state="idle">
   <div id="viewport">
-    <!-- Portrait-native terminal. Fills a vertical monitor edge-to-edge (9:16). -->
+    <!-- Portrait 9:16 terminal. Auto-rotates when the OS feeds a landscape
+         signal to a physically rotated monitor (press O to override). -->
     <main id="stage">
 
-      <!-- screen framing -------------------------------------------------- -->
-      <div class="frame">
-        <span class="corner tl"></span><span class="corner tr"></span>
-        <span class="corner bl"></span><span class="corner br"></span>
-        <span class="rail rail-l"></span><span class="rail rail-r"></span>
+      <!-- ================= TOP STATUS BAR ================= -->
+      <div class="topbar">
+        <span class="tb-item"><span class="tb-dot"></span>SYSTEM ONLINE</span>
+        <span class="tb-item">SECURE LINK <span class="tb-lock">⬢</span></span>
       </div>
 
-      <!-- ================= 1. HEADER ================= -->
+      <!-- ================= HEADER ================= -->
       <header class="zone zone-head">
-        <div class="head-side left">
-          <div class="tag">SYS.ID</div><div class="tag-v">ALF-01</div>
-        </div>
-        <div class="head-center">
-          <h1 class="wordmark">A L F R E D</h1>
-          <p class="subtitle">AUTONOMOUS LIFESTYLE FRAMEWORK<br/>FOR RESPONSIVE ENVIRONMENTS &amp; DEVICES</p>
-        </div>
-        <div class="head-side right">
-          <div class="tag">LOCAL</div><div class="tag-v" id="hClock">--:--:--</div>
-        </div>
+        <h1 class="wordmark">A L F R E D</h1>
+        <p class="subtitle">AUTONOMOUS LIFESTYLE FRAMEWORK<br/>FOR RESPONSIVE ENVIRONMENTS &amp; DEVICES</p>
+        <svg class="emblem" viewBox="0 0 60 18">
+          <path d="M2 4 L26 4 L30 9 L34 4 L58 4" fill="none"/>
+          <path d="M22 9 L30 15 L38 9" fill="none"/>
+        </svg>
       </header>
 
-      <div class="divider"><span class="divider-label">DIAGNOSTICS</span></div>
-
-      <!-- ================= 2. UPPER DIAGNOSTICS ================= -->
-      <section class="zone zone-diag-top">
-        <div class="panel">
-          <div class="panel-hd"><span>SYSTEM STATUS</span><span class="pill ok" id="sysState">ONLINE</span></div>
-          <svg class="ekg" viewBox="0 0 300 70" preserveAspectRatio="none"><polyline id="ekgLine" points=""/></svg>
-          <div class="panel-ft"><span>CPU <b id="cpu">04</b>%</span><span>LOAD <b id="load">0.32</b></span><span>UP <b id="uptime">37:12</b></span></div>
-        </div>
-        <div class="panel panel-mem">
-          <div class="panel-hd"><span>MEMORY</span><span class="pill" id="memPill">NOMINAL</span></div>
-          <div class="mem">
-            <svg viewBox="0 0 120 120">
-              <circle class="mem-track" cx="60" cy="60" r="52"/>
-              <circle class="mem-arc" id="memArc" cx="60" cy="60" r="52"/>
-            </svg>
-            <div class="mem-num"><b id="memPct">62</b><i>%</i></div>
+      <!-- ================= DATA PANELS ================= -->
+      <section class="zone zone-panels">
+        <!-- SYSTEM DIAGNOSTICS -->
+        <div class="panel p-diag">
+          <div class="p-in">
+            <div class="p-tab">SYSTEM DIAGNOSTICS</div>
+            <svg class="ekg" viewBox="0 0 300 42" preserveAspectRatio="none"><polyline id="ekgLine" points=""/></svg>
+            <div class="rows">
+              <div class="row"><span>CPU USAGE</span><b id="cpu">12</b></div>
+              <div class="row"><span>MEMORY</span><b id="memPct">46</b></div>
+              <div class="row"><span>TEMPERATURE</span><b id="coreTemp">31°C</b></div>
+              <div class="row"><span>NETWORK</span><b id="netRate">1.2 Gbps</b></div>
+              <div class="row"><span>UPTIME</span><b id="uptime">07:42:11</b></div>
+              <div class="row"><span>PROCESSES</span><b id="procs">112</b></div>
+            </div>
+            <div class="p-foot">STATUS: <em class="good">OPTIMAL</em></div>
           </div>
-          <div class="panel-ft"><span>USED <b id="memUsed">9.9</b>G</span><span>FREE <b id="memFree">6.1</b>G</span></div>
+        </div>
+
+        <!-- ENVIRONMENT + POWER -->
+        <div class="p-col">
+          <div class="panel">
+            <div class="p-in">
+              <div class="p-tab">ENVIRONMENT</div>
+              <div class="rows">
+                <div class="row"><span>TEMPERATURE</span><b id="envTemp">21.3°C</b></div>
+                <div class="row"><span>HUMIDITY</span><b id="envHum">42%</b></div>
+                <div class="row"><span>CO₂ LEVELS</span><b id="envCo2">612 ppm</b></div>
+                <div class="row"><span>AIR QUALITY</span><b class="good">GOOD</b></div>
+                <div class="row"><span>EXTERIOR</span><b><i id="wxIcon">⛅</i> <span id="wxTemp">72</span>°</b></div>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="p-in">
+              <div class="p-tab">POWER SYSTEM</div>
+              <div class="rows">
+                <div class="row"><span>GRID STATUS</span><b class="good">STABLE</b></div>
+                <div class="row"><span>BATTERY</span><b id="battery">78%</b></div>
+                <div class="row"><span>CONSUMPTION</span><b id="power">1.4 kW</b></div>
+                <div class="row"><span>RESERVE</span><b id="reserve">6.2 kWh</b></div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      <!-- ================= 3. CORE / NEURAL IRIS ================= -->
+      <!-- ================= CORE ================= -->
       <section class="zone zone-core">
         <div class="core" id="core">
           <div class="sweep"></div>
           <div class="ping" id="ping"></div>
-          <svg class="iris" viewBox="0 0 500 500" shape-rendering="geometricPrecision">
+          <svg class="iris" id="iris" viewBox="0 0 600 600" shape-rendering="geometricPrecision">
             <defs>
               <radialGradient id="nucleus" cx="50%" cy="50%" r="50%">
                 <stop offset="0%"  stop-color="#ffffff" stop-opacity="1"/>
-                <stop offset="18%" stop-color="#d6f7ff" stop-opacity="1"/>
-                <stop offset="45%" stop-color="#39c6ff" stop-opacity="0.85"/>
-                <stop offset="78%" stop-color="#0a63ff" stop-opacity="0.22"/>
-                <stop offset="100%" stop-color="#0a63ff" stop-opacity="0"/>
+                <stop offset="16%" stop-color="#cef4ff" stop-opacity="0.95"/>
+                <stop offset="42%" stop-color="#38b6ff" stop-opacity="0.55"/>
+                <stop offset="75%" stop-color="#0a5cff" stop-opacity="0.12"/>
+                <stop offset="100%" stop-color="#0a5cff" stop-opacity="0"/>
               </radialGradient>
             </defs>
-
-            <!-- crosshair -->
-            <line class="cross" x1="250" y1="18" x2="250" y2="482"/>
-            <line class="cross" x1="18" y1="250" x2="482" y2="250"/>
-
-            <!-- radial tick ring (generated) -->
-            <g id="ticks" class="ticks"></g>
-
-            <!-- outer targeting ring w/ brackets -->
-            <g class="spin cw-vslow">
-              <circle class="ring hair" cx="250" cy="250" r="228"/>
-              <path class="bracket-arc" d="M250 34 A216 216 0 0 1 466 250"/>
-              <path class="bracket-arc" d="M250 466 A216 216 0 0 1 34 250"/>
-            </g>
-
-            <!-- major ring + orbital nodes -->
-            <g class="spin ccw-slow">
-              <circle class="ring" cx="250" cy="250" r="188"/>
-              <circle class="ring dash-a" cx="250" cy="250" r="164"/>
-              <g id="orbits"></g>
-            </g>
-
-            <!-- rotating geometry -->
-            <g class="spin cw">
-              <polygon class="geo" points="250,92 387,329 113,329"/>
-              <polygon class="geo faint" points="250,408 113,171 387,171"/>
-              <circle class="ring hair" cx="250" cy="250" r="126"/>
-            </g>
-
-            <!-- inner ring -->
-            <g class="spin ccw">
-              <circle class="ring dash-b" cx="250" cy="250" r="98"/>
-            </g>
-
-            <!-- nucleus -->
-            <circle class="halo" cx="250" cy="250" r="140" fill="url(#nucleus)"/>
-            <circle class="core-dot" cx="250" cy="250" r="11"/>
+            <!-- procedural detail groups are populated by app.js -->
+            <g id="gAxes"></g>
+            <g id="gStatic"></g>
+            <g id="gTicks"></g>
+            <g class="spin cw-vslow"  id="gArcsA"></g>
+            <g class="spin ccw-slow"  id="gArcsB"></g>
+            <g class="spin ccw-slow"  id="gNodes"></g>
+            <g class="spin cw-slow"   id="gSpokes"></g>
+            <g class="spin ccw"       id="gInner"></g>
+            <circle class="halo" cx="300" cy="300" r="86" fill="url(#nucleus)"/>
+            <g class="spin cw" id="gIrisSpokes"></g>
+            <circle class="inner-ring" cx="300" cy="300" r="58"/>
+            <circle class="core-dot" cx="300" cy="300" r="9"/>
           </svg>
         </div>
       </section>
 
-      <!-- ================= 4. DIALOGUE / STATE ================= -->
-      <section class="zone zone-dialogue">
-        <div class="state-row">
-          <span class="state-dot" id="stateDot"></span>
-          <span class="state-label" id="stateLabel">STANDBY</span>
-          <span class="state-sub" id="stateSub">VOICE INPUT IDLE</span>
+      <!-- ================= AI INTERFACE ================= -->
+      <section class="zone zone-ai">
+        <div class="ai-frame">
+          <span class="af-c tl"></span><span class="af-c tr"></span>
+          <span class="af-c bl"></span><span class="af-c br"></span>
+          <div class="ai-tab">AI INTERFACE</div>
+          <div class="ai-state" id="stateLabel">STANDBY</div>
+          <div class="ai-dots" id="seqDots"></div>
+          <div class="ai-line" id="transcript">AWAITING VOICE COMMAND</div>
         </div>
-        <div class="transcript" id="transcript"><span class="cursor">▌</span></div>
+      </section>
+
+      <!-- ================= VOICE INPUT ================= -->
+      <section class="zone zone-voice">
+        <div class="voice-hd">
+          <span class="vh-rule"></span>
+          <span class="vh-label">VOICE INPUT</span>
+          <span class="vh-rule"></span>
+          <span class="vh-live"><span class="tb-dot"></span>REAL-TIME</span>
+        </div>
         <div class="wave" id="wave"></div>
       </section>
 
-      <div class="divider"><span class="divider-label">ENVIRONMENT</span></div>
-
-      <!-- ================= 5. LOWER DIAGNOSTICS ================= -->
-      <section class="zone zone-diag-bot">
-        <div class="panel">
-          <div class="panel-hd"><span>WEATHER</span><span class="pill muted" id="wxLoc">NEW YORK</span></div>
-          <div class="wx"><div class="wx-ic" id="wxIcon">⛅</div><div class="wx-t"><b id="wxTemp">72</b><i>°</i></div></div>
-          <div class="panel-ft"><span id="wxCond">PARTLY CLOUDY</span><span>FEELS <b id="wxFeels">70</b>°</span></div>
-        </div>
-        <div class="panel panel-net">
-          <div class="panel-hd"><span>NETWORK</span><span class="pill ok">ONLINE</span></div>
-          <div class="net" id="netBars"></div>
-          <div class="panel-ft"><span>UP <b id="netUp">128</b>Mb</span><span>PING <b id="netPing">12</b>ms</span></div>
-        </div>
-      </section>
-
-      <!-- ================= 6. FOOTER / MODULES ================= -->
+      <!-- ================= FOOTER MODULES ================= -->
       <footer class="zone zone-foot">
-        <div class="modules">
-          <div class="mod"><span class="m-dot on"></span><div><b>ENVIRONMENT</b><i>ACTIVE</i></div></div>
-          <div class="mod"><span class="m-dot on"></span><div><b>DEVICES</b><i>CONNECTED</i></div></div>
-          <div class="mod"><span class="m-dot standby"></span><div><b>SECURITY</b><i>STANDBY</i></div></div>
-          <div class="mod"><span class="m-dot on"></span><div><b>NETWORK</b><i>ONLINE</i></div></div>
+        <div class="mods">
+          <div class="mod"><b>LOGS</b><i id="modLogs">NO NEW ALERTS</i></div>
+          <div class="mod"><b>UPDATES</b><i>ALL SYSTEMS CURRENT</i></div>
+          <div class="mod mod-glyph">
+            <svg viewBox="0 0 40 40">
+              <circle cx="20" cy="20" r="17" class="mg-ring"/>
+              <circle cx="20" cy="20" r="11" class="mg-ring dash"/>
+              <circle cx="20" cy="20" r="4" class="mg-dot"/>
+            </svg>
+          </div>
+          <div class="mod"><b>SECURITY</b><i>LEVEL 5 ACTIVE</i></div>
+          <div class="mod"><b>CONNECTED</b><i><span id="devices">12</span> DEVICES ONLINE</i></div>
         </div>
-        <div class="sys-line">ALFRED&nbsp;OS&nbsp;·&nbsp;BUILD&nbsp;2.4.1&nbsp;·&nbsp;<span id="sysMsg">ALL SYSTEMS NOMINAL</span></div>
+        <div class="sysbar">
+          <span>ALFRED OS v4.7.2</span><span class="sep">│</span>
+          <span>BUILD 2025.05.20</span><span class="sep">│</span>
+          <span>CLASSIFIED</span><span class="sep">│</span>
+          <span>WAYNE ENTERPRISES <b class="wmark">W</b></span>
+        </div>
       </footer>
 
       <!-- operator overlay (press H to hide) -->
       <div class="operator" id="operator">
         <span class="op-c"><b id="phraseIdx">0</b>/<span id="phraseTotal">0</span></span>
-        <span class="op-h">SPACE next · ⌫ back · R reset · 1-4 state · F full · H hide</span>
+        <span class="op-h">SPACE next · ⌫ back · R reset · 1-4 state · O rotate · F full · H hide</span>
       </div>
     </main>
   </div>
