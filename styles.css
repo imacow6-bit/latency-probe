@@ -148,6 +148,21 @@ body[data-state="listening"] .ping { animation: ping 1.5s ease-out infinite; }
 @keyframes ping { 0%{ transform: translate(-50%,-50%) scale(0.3); opacity:.8 }
                  100%{ transform: translate(-50%,-50%) scale(1.6); opacity:0 } }
 
+/* Shazam-style ripples radiating from the nucleus while speaking.
+   Spawned by app.js on amplitude peaks; --rs = final scale. */
+.ripple {
+  position: absolute; left: 50%; top: 50%; width: 26%; height: 26%;
+  margin: -13% 0 0 -13%; border-radius: 50%; pointer-events: none;
+  border: 0.32cqw solid rgba(150,235,255,0.85);
+  box-shadow: 0 0 1.2cqw rgba(120,225,255,0.5), inset 0 0 1.2cqw rgba(120,225,255,0.35);
+  transform: scale(0.5); opacity: 0;
+  animation: ripple-out 1.05s cubic-bezier(0.15, 0.6, 0.4, 1) forwards;
+}
+@keyframes ripple-out {
+  0%   { transform: scale(0.5);      opacity: 0.9; }
+  100% { transform: scale(var(--rs, 2.8)); opacity: 0; }
+}
+
 /* state overrides */
 body[data-state="processing"] .sweep    { opacity: 1; }
 body[data-state="processing"] .cw       { animation-duration: 8s; }
@@ -156,8 +171,10 @@ body[data-state="processing"] .cw-slow  { animation-duration: 18s; }
 body[data-state="processing"] .ccw-slow { animation-duration: 24s; }
 body[data-state="listening"] .st-tick-M { stroke: var(--cy-hi); }
 body[data-state="listening"] .inner-ring{ stroke: var(--cy-hi); }
+/* while speaking, JS drives the nucleus scale from the audio amplitude —
+   pause the CSS breathe so the two don't fight */
 body[data-state="speaking"] .halo,
-body[data-state="speaking"] .core-dot   { animation-duration: 1s; }
+body[data-state="speaking"] .core-dot   { animation: none; }
 body[data-state="speaking"] .cw         { animation-duration: 13s; }
 body[data-state="speaking"] .ccw        { animation-duration: 10s; }
 body[data-state="speaking"] .st-spoke   { opacity: 0.9; }

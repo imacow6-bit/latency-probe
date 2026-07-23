@@ -256,6 +256,84 @@
 
   function stopAudio() { if (current) { current.pause(); current.currentTime = 0; current = null; } }
 
+  /* =========================================================
+     AUDIO-REACTIVE NUCLEUS (Shazam-style)
+     A Web Audio analyser reads the real amplitude of whatever
+     ALFRED is saying and drives the nucleus scale + ripple
+     rings. Falls back to a synthetic envelope if the browser
+     won't expose sample data (some file:// setups).
+     ========================================================= */
+  var audioCtx = null, analyser = null, tdData = null;
+  var analyserAlive = false;   // saw real signal at least once
+  var speakStart = 0;
+  var ampSm = 0;               // smoothed amplitude 0..1
+  var synthAmp = 0.3;
+  var lastRipple = 0;
+  var coreEl = document.getElementById("core");
+  var gNucleus = document.getElementById("gNucleus");
+  gNucleus.style.transformOrigin = "300px 300px";
+
+  function initAudioGraph() {
+    if (audioCtx) { if (audioCtx.state === "suspended") audioCtx.resume(); return; }
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    try {
+      audioCtx = new AC();
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 512;
+      analyser.smoothingTimeConstant = 0.5;
+      tdData = new Uint8Array(analyser.fftSize);
+      analyser.connect(audioCtx.destination);
+    } catch (e) { audioCtx = null; analyser = null; }
+  }
+  function wireClip(clip) {
+    if (!audioCtx || clip.wired) return;
+    try {
+      var src = audioCtx.createMediaElementSource(clip.audio);
+      src.connect(analyser);
+      clip.wired = true;
+    } catch (e) { /* element already wired or tainted — fallback covers it */ }
+  }
+
+  function currentAmp(now) {
+    var target;
+    if (analyser && current) {
+      analyser.getByteTimeDomainData(tdData);
+      var sum = 0;
+      for (var i = 0; i < tdData.length; i++) { var d = tdData[i] - 128; sum += d * d; }
+      var rms = Math.sqrt(sum / tdData.length) / 128;
+      if (rms > 0.004) analyserAlive = true;
+      if (analyserAlive) {
+        target = Math.min(1, rms * 3.4);
+      } else if (now - speakStart > 600) {
+        target = null; // analyser silent — use synthetic
+      } else {
+        target = 0;    // grace period while playback ramps up
+      }
+    } else {
+      target = null;
+    }
+    if (target === null) {
+      // synthetic envelope: speech-like random walk
+      synthAmp += (Math.random() - 0.5) * 0.22;
+      synthAmp = Math.max(0.08, Math.min(0.72, synthAmp));
+      target = synthAmp * (0.6 + 0.4 * Math.abs(Math.sin(now / 140)));
+    }
+    // fast attack, slower release
+    ampSm = target > ampSm ? ampSm * 0.45 + target * 0.55 : ampSm * 0.88;
+    return ampSm;
+  }
+
+  function spawnRipple(now, amp) {
+    if (now - lastRipple < 120 || amp < 0.14) return;
+    lastRipple = now;
+    var r = document.createElement("div");
+    r.className = "ripple";
+    r.style.setProperty("--rs", (1.9 + amp * 2.3).toFixed(2));
+    coreEl.appendChild(r);
+    setTimeout(function () { r.remove(); }, 1100);
+  }
+
   function playSequence(i) {
     clearTimers(); stopAudio();
     setState(STATE.LISTENING);
@@ -266,9 +344,12 @@
   }
   function beginSpeak(i) {
     setState(STATE.SPEAKING);
+    speakStart = performance.now();
     transcriptEl.textContent = transcripts[i] || IDLE_LINE;
     var clip = clips[i];
     if (clip) {
+      initAudioGraph();
+      wireClip(clip);
       current = clip.audio; current.currentTime = 0;
       var p = current.play();
       if (p && p.catch) p.catch(function () {});
@@ -407,20 +488,34 @@
   var WAVE_BARS = 96;
   for (var w0 = 0; w0 < WAVE_BARS; w0++) wave.appendChild(document.createElement("span"));
   (function animateWave() {
-    var bars = wave.children, t = performance.now() / 190;
+    var now = performance.now();
+    var bars = wave.children, t = now / 190;
     var mid = (WAVE_BARS - 1) / 2;
+    var speaking = waveMode === STATE.SPEAKING;
+
+    // amplitude drives the nucleus while speaking; eases back to rest otherwise
+    var amp = 0;
+    if (speaking) {
+      amp = currentAmp(now);
+      spawnRipple(now, amp);
+    } else {
+      ampSm *= 0.90;
+      amp = ampSm;
+    }
+    gNucleus.style.transform = "scale(" + (1 + amp * 0.85).toFixed(3) + ")";
+
     for (var m = 0; m < bars.length; m++) {
       var falloff = 1 - Math.pow(Math.abs(m - mid) / mid, 1.6);  // taper at edges
       var h;
-      if (waveMode === STATE.SPEAKING)
-        h = 6 + falloff * Math.abs(Math.sin(t + m * 0.55)) * (34 + Math.random() * 52);
+      if (speaking)
+        h = 6 + falloff * (0.35 + amp * 2.1) * Math.abs(Math.sin(t + m * 0.55)) * (26 + Math.random() * 30);
       else if (waveMode === STATE.PROCESSING)
         h = 5 + falloff * Math.abs(Math.sin(t * 0.9 + m)) * (14 + Math.random() * 14);
       else if (waveMode === STATE.LISTENING)
         h = 5 + falloff * Math.abs(Math.sin(t * 1.5 + m * 0.3)) * 22;
       else
         h = 3 + falloff * Math.abs(Math.sin(t * 0.32 + m * 0.4)) * 6;
-      bars[m].style.height = h.toFixed(1) + "%";
+      bars[m].style.height = Math.min(100, h).toFixed(1) + "%";
     }
     requestAnimationFrame(animateWave);
   })();
